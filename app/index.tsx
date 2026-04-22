@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ContactListItem } from "../components/ContactListItem";
+import { EmptyState } from "../components/EmptyState";
 import { Contact, getContacts } from "../services/database";
 
 export default function Index() {
@@ -54,33 +56,6 @@ export default function Index() {
       }));
   }, [search, contacts]);
 
-  const renderItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={() => router.push(`/edit-contact/${item.id}`)}
-      className="flex-row items-center px-4 py-3 border-b border-gray-100 bg-white"
-    >
-      <View
-
-        className={`w-12 h-12 rounded-full items-center justify-center ${item.color || 'bg-gray-400'} mr-4 shadow-sm`}
-      >
-        <Text className="text-white font-bold text-lg">
-          {item.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .substring(0, 2)
-            .toUpperCase()}
-        </Text>
-      </View>
-      <View className="flex-1">
-        <Text className="text-gray-900 font-semibold text-base">{item.name}</Text>
-        <Text className="text-gray-500 text-sm">{item.phone}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={20} color="#CBD5E1" />
-    </TouchableOpacity>
-  );
-
   const renderSectionHeader = ({ section: { title } }: { section: { title: string } }) => (
     <View className="bg-gray-50 px-4 py-2">
       <Text className="text-gray-400 font-bold text-xs uppercase tracking-wider">
@@ -101,6 +76,7 @@ export default function Index() {
         }}
       />
 
+      {/* Barra de Busca */}
       <View className="px-4 pb-4">
         <View className="mt-2 flex-row items-center bg-gray-100 rounded-xl px-3 py-2">
           <Ionicons name="search" size={20} color="#94A3B8" />
@@ -122,24 +98,15 @@ export default function Index() {
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
+        renderItem={({ item }) => <ContactListItem contact={item} />}
         renderSectionHeader={renderSectionHeader}
         stickySectionHeadersEnabled={true}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListEmptyComponent={
-          <View className="items-center justify-center mt-20 px-8">
-            <View className="bg-gray-50 p-6 rounded-full mb-4">
-              <Ionicons name="people-outline" size={48} color="#CBD5E1" />
-            </View>
-            <Text className="text-gray-900 font-bold text-xl mb-2">
-              {contacts.length === 0 ? "Nenhum contato salvo" : "Nenhum contato encontrado"}
-            </Text>
-            <Text className="text-gray-500 text-center text-base">
-              {contacts.length === 0
-                ? "Toque no botão '+' para adicionar seu primeiro contato."
-                : `Não encontramos nenhum contato com o nome "${search}".`}
-            </Text>
-          </View>
+          <EmptyState
+            hasNoContacts={contacts.length === 0}
+            searchQuery={search}
+          />
         }
       />
 

@@ -8,14 +8,13 @@ import {
     ScrollView,
     StatusBar,
     Text,
-    TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FormField } from "../components/FormField";
 import { addContact } from "../services/database";
 import { formatPhone } from "../services/utils";
-
 
 const TAILWIND_COLORS = [
     "bg-blue-500", "bg-green-500", "bg-purple-500", "bg-amber-500",
@@ -95,68 +94,48 @@ export default function CreateContact() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Form Fields */}
                     <View className="space-y-4">
-                        <View>
-                            <Text className="text-gray-500 font-medium mb-2 ml-1">Nome Completo</Text>
-                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.name ? 'border-red-500' : 'border-gray-100'}`}>
-                                <Ionicons name="person-outline" size={20} color={errors.name ? "#EF4444" : "#94A3B8"} className="mr-3" />
-                                <TextInput
-                                    className="flex-1 text-gray-900 text-base ml-2"
-                                    placeholder="Ex: Alice Johnson"
-                                    placeholderTextColor="#94A3B8"
-                                    value={name}
-                                    onChangeText={(text) => {
-                                        setName(text);
-                                        if (errors.name) setErrors({ ...errors, name: undefined });
-                                    }}
-                                    editable={!isSaving}
-                                />
-                            </View>
-                            {errors.name && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.name}</Text>}
-                        </View>
+                        <FormField
+                            label="Nome Completo"
+                            iconName="person-outline"
+                            placeholder="Ex: Alice Johnson"
+                            value={name}
+                            onChangeText={(text) => {
+                                setName(text);
+                                if (errors.name) setErrors({ ...errors, name: undefined });
+                            }}
+                            error={errors.name}
+                            editable={!isSaving}
+                        />
 
-                        <View className="mt-4">
-                            <Text className="text-gray-500 font-medium mb-2 ml-1">Telefone</Text>
-                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.phone ? 'border-red-500' : 'border-gray-100'}`}>
-                                <Ionicons name="call-outline" size={20} color={errors.phone ? "#EF4444" : "#94A3B8"} className="mr-3" />
-                                <TextInput
-                                    className="flex-1 text-gray-900 text-base ml-2"
-                                    placeholder="(00) 00000-0000"
-                                    placeholderTextColor="#94A3B8"
-                                    keyboardType="phone-pad"
-                                    value={phone}
-                                    onChangeText={(text) => {
-                                        setPhone(formatPhone(text));
-                                        if (errors.phone) setErrors({ ...errors, phone: undefined });
-                                    }}
-                                    editable={!isSaving}
+                        <FormField
+                            label="Telefone"
+                            iconName="call-outline"
+                            placeholder="(00) 00000-0000"
+                            keyboardType="phone-pad"
+                            value={phone}
+                            onChangeText={(text) => {
+                                setPhone(formatPhone(text));
+                                if (errors.phone) setErrors({ ...errors, phone: undefined });
+                            }}
+                            error={errors.phone}
+                            editable={!isSaving}
+                        />
 
-                                />
-                            </View>
-                            {errors.phone && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.phone}</Text>}
-                        </View>
-
-                        <View className="mt-4">
-                            <Text className="text-gray-500 font-medium mb-2 ml-1">E-mail</Text>
-                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.email ? 'border-red-500' : 'border-gray-100'}`}>
-                                <Ionicons name="mail-outline" size={20} color={errors.email ? "#EF4444" : "#94A3B8"} className="mr-3" />
-                                <TextInput
-                                    className="flex-1 text-gray-900 text-base ml-2"
-                                    placeholder="exemplo@email.com"
-                                    placeholderTextColor="#94A3B8"
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    value={email}
-                                    onChangeText={(text) => {
-                                        setEmail(text);
-                                        if (errors.email) setErrors({ ...errors, email: undefined });
-                                    }}
-                                    editable={!isSaving}
-                                />
-                            </View>
-                            {errors.email && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.email}</Text>}
-                        </View>
+                        <FormField
+                            label="E-mail"
+                            iconName="mail-outline"
+                            placeholder="exemplo@email.com"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            value={email}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                if (errors.email) setErrors({ ...errors, email: undefined });
+                            }}
+                            error={errors.email}
+                            editable={!isSaving}
+                        />
                     </View>
 
                     {/* Save Button */}
