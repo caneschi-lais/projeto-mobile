@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,33 +13,72 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { addContact } from "../services/database";
+import { formatPhone } from "../services/utils";
+
+
+const TAILWIND_COLORS = [
+    "bg-blue-500", "bg-green-500", "bg-purple-500", "bg-amber-500",
+    "bg-rose-500", "bg-indigo-500", "bg-cyan-500", "bg-orange-500",
+    "bg-teal-500", "bg-red-500", "bg-pink-500", "bg-violet-500",
+    "bg-emerald-500", "bg-sky-500", "bg-fuchsia-500", "bg-lime-500"
+];
 
 export default function CreateContact() {
     const router = useRouter();
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+    const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
 
-    const handleSave = () => {
-        console.log("Saving contact:", { name, phone, email });
-        router.back();
+    const validate = () => {
+        const newErrors: { name?: string; phone?: string; email?: string } = {};
+
+        if (!name.trim()) {
+            newErrors.name = "O nome é obrigatório";
+        } else if (name.trim().length < 3) {
+            newErrors.name = "O nome deve ter pelo menos 3 caracteres";
+        }
+
+        if (!phone.trim()) {
+            newErrors.phone = "O telefone é obrigatório";
+        }
+
+        if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = "E-mail inválido";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = async () => {
+        if (!validate()) return;
+
+        setIsSaving(true);
+        try {
+            const randomColor = TAILWIND_COLORS[Math.floor(Math.random() * TAILWIND_COLORS.length)];
+            await addContact(name.trim(), phone.trim(), email.trim(), randomColor);
+            router.back();
+        } catch (error) {
+            console.error("Error saving contact:", error);
+            Alert.alert("Erro", "Não foi possível salvar o contato.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
         <SafeAreaView className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" />
-
-            {/* Header */}
-            <View className="px-4 py-4 flex-row items-center justify-between border-b border-gray-100">
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="p-2 -ml-2"
-                >
-                    <Ionicons name="arrow-back" size={24} color="#1F2937" />
-                </TouchableOpacity>
-                <Text className="text-xl font-bold text-gray-900">Novo Contato</Text>
-                <View className="w-10" />
-            </View>
+            <Stack.Screen
+                options={{
+                    title: "Novo Contato",
+                    headerShown: true,
+                    headerBackTitle: "Voltar",
+                }}
+            />
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -56,40 +96,51 @@ export default function CreateContact() {
                     </View>
 
                     {/* Form Fields */}
-                    <View className="space-y-6">
+                    <View className="space-y-4">
                         <View>
                             <Text className="text-gray-500 font-medium mb-2 ml-1">Nome Completo</Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-100">
-                                <Ionicons name="person-outline" size={20} color="#94A3B8" className="mr-3" />
+                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.name ? 'border-red-500' : 'border-gray-100'}`}>
+                                <Ionicons name="person-outline" size={20} color={errors.name ? "#EF4444" : "#94A3B8"} className="mr-3" />
                                 <TextInput
                                     className="flex-1 text-gray-900 text-base ml-2"
                                     placeholder="Ex: Alice Johnson"
                                     placeholderTextColor="#94A3B8"
                                     value={name}
-                                    onChangeText={setName}
+                                    onChangeText={(text) => {
+                                        setName(text);
+                                        if (errors.name) setErrors({ ...errors, name: undefined });
+                                    }}
+                                    editable={!isSaving}
                                 />
                             </View>
+                            {errors.name && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.name}</Text>}
                         </View>
 
                         <View className="mt-4">
                             <Text className="text-gray-500 font-medium mb-2 ml-1">Telefone</Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-100">
-                                <Ionicons name="call-outline" size={20} color="#94A3B8" className="mr-3" />
+                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.phone ? 'border-red-500' : 'border-gray-100'}`}>
+                                <Ionicons name="call-outline" size={20} color={errors.phone ? "#EF4444" : "#94A3B8"} className="mr-3" />
                                 <TextInput
                                     className="flex-1 text-gray-900 text-base ml-2"
                                     placeholder="(00) 00000-0000"
                                     placeholderTextColor="#94A3B8"
                                     keyboardType="phone-pad"
                                     value={phone}
-                                    onChangeText={setPhone}
+                                    onChangeText={(text) => {
+                                        setPhone(formatPhone(text));
+                                        if (errors.phone) setErrors({ ...errors, phone: undefined });
+                                    }}
+                                    editable={!isSaving}
+
                                 />
                             </View>
+                            {errors.phone && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.phone}</Text>}
                         </View>
 
                         <View className="mt-4">
                             <Text className="text-gray-500 font-medium mb-2 ml-1">E-mail</Text>
-                            <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border border-gray-100">
-                                <Ionicons name="mail-outline" size={20} color="#94A3B8" className="mr-3" />
+                            <View className={`flex-row items-center bg-gray-50 rounded-2xl px-4 py-4 border ${errors.email ? 'border-red-500' : 'border-gray-100'}`}>
+                                <Ionicons name="mail-outline" size={20} color={errors.email ? "#EF4444" : "#94A3B8"} className="mr-3" />
                                 <TextInput
                                     className="flex-1 text-gray-900 text-base ml-2"
                                     placeholder="exemplo@email.com"
@@ -97,9 +148,14 @@ export default function CreateContact() {
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                     value={email}
-                                    onChangeText={setEmail}
+                                    onChangeText={(text) => {
+                                        setEmail(text);
+                                        if (errors.email) setErrors({ ...errors, email: undefined });
+                                    }}
+                                    editable={!isSaving}
                                 />
                             </View>
+                            {errors.email && <Text className="text-red-500 text-sm mt-1 ml-2">{errors.email}</Text>}
                         </View>
                     </View>
 
@@ -107,9 +163,12 @@ export default function CreateContact() {
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={handleSave}
-                        className="mt-12 bg-blue-600 py-4 rounded-2xl items-center shadow-lg shadow-blue-200"
+                        disabled={isSaving}
+                        className={`mt-12 py-4 rounded-2xl items-center shadow-lg ${isSaving ? 'bg-gray-300 shadow-none' : 'bg-blue-600 shadow-blue-200'}`}
                     >
-                        <Text className="text-white font-bold text-lg">Salvar Contato</Text>
+                        <Text className="text-white font-bold text-lg">
+                            {isSaving ? "Salvando..." : "Salvar Contato"}
+                        </Text>
                     </TouchableOpacity>
 
                     <View className="h-20" />

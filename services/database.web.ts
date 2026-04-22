@@ -17,6 +17,7 @@ const getDB = (): Promise<IDBDatabase> => {
         if (dbInstance) return resolve(dbInstance);
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
+
         request.onerror = () => reject(request.error);
         request.onsuccess = () => {
             dbInstance = request.result;
@@ -47,6 +48,7 @@ export const getContacts = async (): Promise<Contact[]> => {
         const transaction = db.transaction(STORE_NAME, 'readonly');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.getAll();
+
         request.onsuccess = () => {
             // IndexedDB returns results in insertion order or index order.
             // We sort manually to match SQLite behavior.
@@ -81,6 +83,7 @@ export const addContact = async (name: string, phone: string, email: string, col
         request.onerror = () => reject(request.error);
     });
 };
+
 export const updateContact = async (id: number, name: string, phone: string, email: string) => {
     const db = await getDB();
     return new Promise<void>((resolve, reject) => {
@@ -103,6 +106,7 @@ export const updateContact = async (id: number, name: string, phone: string, ema
         getRequest.onerror = () => reject(getRequest.error);
     });
 };
+
 export const deleteContact = async (id: number) => {
     const db = await getDB();
     return new Promise<void>((resolve, reject) => {

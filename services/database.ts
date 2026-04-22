@@ -14,6 +14,7 @@ export const initializeDatabase = async () => {
   `);
 };
 
+
 export interface Contact {
     id: number;
     name: string;
