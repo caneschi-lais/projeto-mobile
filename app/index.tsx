@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import React, { useMemo, useState } from "react";
 import {
   SectionList,
   StatusBar,
@@ -12,27 +12,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ContactListItem } from "../components/ContactListItem";
 import { EmptyState } from "../components/EmptyState";
-import { Contact, getContacts } from "../services/database";
+import { useContacts } from '../hooks/useContacts';
+import { Contact } from "../services/database";
 
 export default function Index() {
   const [search, setSearch] = useState("");
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const { contacts, loading } = useContacts();
   const router = useRouter();
-
-  const loadContacts = useCallback(async () => {
-    try {
-      const data = await getContacts();
-      setContacts(data);
-    } catch (error) {
-      console.error("Error loading contacts:", error);
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadContacts();
-    }, [loadContacts])
-  );
 
   const sections = useMemo(() => {
     const filtered = contacts.filter((c) =>
@@ -103,10 +89,12 @@ export default function Index() {
         stickySectionHeadersEnabled={true}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListEmptyComponent={
-          <EmptyState
-            hasNoContacts={contacts.length === 0}
-            searchQuery={search}
-          />
+          loading ? null : (
+            <EmptyState
+              hasNoContacts={contacts.length === 0}
+              searchQuery={search}
+            />
+          )
         }
       />
 

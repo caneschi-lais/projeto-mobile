@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Image,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -11,9 +12,10 @@ import {
     StatusBar,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CameraCapture } from "../../components/CameraCapture";
 import { FormField } from "../../components/FormField";
 import { deleteContact, getContactById, updateContact } from "../../services/database";
 import { formatPhone } from "../../services/utils";
@@ -22,11 +24,12 @@ export default function EditContact() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
     const contactId = typeof id === 'string' ? parseInt(id) : 0;
-
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [color, setColor] = useState("bg-gray-500");
+    const [imageUri, setImageUri] = useState<string | null>(null);
+    const [showCamera, setShowCamera] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -41,14 +44,14 @@ export default function EditContact() {
                     setPhone(formatPhone(contact.phone));
                     setEmail(contact.email);
                     setColor(contact.color);
-
+                    setImageUri(contact.imageUri || null);
                 } else {
-                    Alert.alert("Erro", "Contato não encontrado.");
+                    Alert.alert("Erro", "Contacto não encontrado.");
                     router.back();
                 }
             } catch (error) {
-                console.error("Error loading contact:", error);
-                Alert.alert("Erro", "Falha ao carregar contato.");
+                console.error("Erro ao carregar contacto:", error);
+                Alert.alert("Erro", "Falha ao carregar os dados.");
             } finally {
                 setIsLoading(false);
             }
@@ -85,11 +88,11 @@ export default function EditContact() {
 
         setIsSaving(true);
         try {
-            await updateContact(contactId, name.trim(), phone.trim(), email.trim());
+            await updateContact(contactId, name.trim(), phone.trim(), email.trim(), imageUri || undefined);
             router.back();
         } catch (error) {
-            console.error("Error updating contact:", error);
-            Alert.alert("Erro", "Não foi possível atualizar o contato.");
+            console.error("Erro ao atualizar contacto:", error);
+            Alert.alert("Erro", "Não foi possível salvar as alterações.");
         } finally {
             setIsSaving(false);
         }
@@ -102,8 +105,8 @@ export default function EditContact() {
             await deleteContact(contactId);
             router.back();
         } catch (error) {
-            console.error("Error deleting contact:", error);
-            Alert.alert("Erro", "Não foi possível excluir o contato.");
+            console.error("Erro ao eliminar contacto:", error);
+            Alert.alert("Erro", "Não foi possível eliminar o contacto.");
         } finally {
             setIsSaving(false);
         }
@@ -117,12 +120,24 @@ export default function EditContact() {
         );
     }
 
+    if (showCamera) {
+        return (
+            <CameraCapture
+                onCapture={(uri) => {
+                    setImageUri(uri);
+                    setShowCamera(false);
+                }}
+                onClose={() => setShowCamera(false)}
+            />
+        );
+    }
+
     return (
         <SafeAreaView className="flex-1 bg-white">
             <StatusBar barStyle="dark-content" />
             <Stack.Screen
                 options={{
-                    title: "Editar Contato",
+                    title: "Editar Contacto",
                     headerShown: true,
                     headerBackTitle: "Voltar",
                     headerRight: () => (
@@ -138,21 +153,29 @@ export default function EditContact() {
                 className="flex-1"
             >
                 <ScrollView className="flex-1 px-6 pt-8">
-                    {/* Avatar Section */}
-                    <View className="items-center mb-10 hidden">
-                        <View className={`w-32 h-32 ${color} rounded-full items-center justify-center border-4 border-white shadow-sm`}>
-                            <Text className="text-white font-bold text-4xl">
-                                {name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .substring(0, 2)
-                                    .toUpperCase()}
+                    {/* Avatar */}
+                    <View className="items-center mb-10">
+                        <TouchableOpacity
+                            onPress={() => setShowCamera(true)}
+                            className={`w-32 h-32 ${imageUri ? 'bg-transparent' : color} rounded-full items-center justify-center border-4 border-white shadow-sm overflow-hidden`}
+                        >
+                            {imageUri ? (
+                                <Image source={{ uri: imageUri }} style={{ width: 128, height: 128 }} />
+                            ) : (
+                                <Text className="text-white font-bold text-4xl">
+                                    {name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity className="mt-4" onPress={() => setShowCamera(true)}>
+                            <Text className="text-blue-600 font-semibold">
+                                {imageUri ? "Trocar Foto" : "Adicionar Foto"}
                             </Text>
-                        </View>
+                        </TouchableOpacity>
                     </View>
 
-                    <View className="space-y-4">
+                    {/* formulario */}
+                    <View className="space-y-2">
                         <FormField
                             label="Nome Completo"
                             iconName="person-outline"
@@ -196,7 +219,7 @@ export default function EditContact() {
                         />
                     </View>
 
-                    {/* Save Button */}
+                    {/* Botão de salvar */}
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={handleSave}
@@ -204,7 +227,7 @@ export default function EditContact() {
                         className={`mt-12 py-4 rounded-2xl items-center shadow-lg ${isSaving ? 'bg-gray-300 shadow-none' : 'bg-blue-600 shadow-blue-200'}`}
                     >
                         <Text className="text-white font-bold text-lg">
-                            {isSaving ? "Salvando..." : "Salvar Alterações"}
+                            {isSaving ? "A guardar..." : "Guardar Alterações"}
                         </Text>
                     </TouchableOpacity>
 
@@ -212,7 +235,7 @@ export default function EditContact() {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Custom Delete Confirmation Modal */}
+            {/* Modal de Confirmação delete */}
             <Modal
                 visible={isDeleteModalVisible}
                 transparent={true}
@@ -226,11 +249,11 @@ export default function EditContact() {
                         </View>
 
                         <Text className="text-gray-900 text-2xl font-bold text-center mb-2">
-                            Excluir Contato?
+                            Eliminar Contacto?
                         </Text>
 
                         <Text className="text-gray-500 text-base text-center mb-8 leading-6">
-                            Tem certeza que deseja excluir o contato <Text className="font-bold text-gray-900">"{name}"</Text>? Esta ação não poderá ser desfeita.
+                            Tem a certeza que deseja eliminar o contacto <Text className="font-bold text-gray-900">"{name}"</Text>? Esta ação não pode ser desfeita.
                         </Text>
 
                         <View className="flex-row space-x-3 w-full gap-3">
@@ -245,7 +268,7 @@ export default function EditContact() {
                                 onPress={confirmDelete}
                                 className="flex-1 bg-red-600 py-4 rounded-2xl items-center shadow-lg shadow-red-200"
                             >
-                                <Text className="text-white font-bold text-lg">Excluir</Text>
+                                <Text className="text-white font-bold text-lg">Eliminar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

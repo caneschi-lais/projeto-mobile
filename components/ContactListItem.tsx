@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { Contact } from "../services/database";
 
 interface ContactListItemProps {
@@ -11,7 +11,6 @@ interface ContactListItemProps {
 export function ContactListItem({ contact }: ContactListItemProps) {
     const router = useRouter();
 
-    // Lógica para extrair as iniciais do nome
     const initials = contact.name
         .split(" ")
         .map((n) => n[0])
@@ -25,12 +24,24 @@ export function ContactListItem({ contact }: ContactListItemProps) {
             onPress={() => router.push(`/edit-contact/${contact.id}`)}
             className="flex-row items-center px-4 py-3 border-b border-gray-100 bg-white"
         >
+            {/* Avatar */}
             <View
                 className={`w-12 h-12 rounded-full items-center justify-center ${contact.color || "bg-gray-400"
-                    } mr-4 shadow-sm`}
+                    } mr-4 shadow-sm overflow-hidden`}
             >
-                <Text className="text-white font-bold text-lg">{initials}</Text>
+                {contact.imageUri ? (
+                    // Exibe a foto se ela existir
+                    <Image
+                        source={{ uri: contact.imageUri }}
+                        className="w-full h-full"
+                        resizeMode="cover"
+                    />
+                ) : (
+                    // Caso contrário, exibe as iniciais
+                    <Text className="text-white font-bold text-lg">{initials}</Text>
+                )}
             </View>
+
             <View className="flex-1">
                 <Text className="text-gray-900 font-semibold text-base">
                     {contact.name}

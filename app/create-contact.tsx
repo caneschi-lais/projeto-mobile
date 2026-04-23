@@ -3,6 +3,7 @@ import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
     Alert,
+    Image,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +13,7 @@ import {
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CameraCapture } from "../components/CameraCapture";
 import { FormField } from "../components/FormField";
 import { addContact } from "../services/database";
 import { formatPhone } from "../services/utils";
@@ -30,6 +32,8 @@ export default function CreateContact() {
     const [email, setEmail] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
+    const [imageUri, setImageUri] = useState<string | null>(null);
+    const [showCamera, setShowCamera] = useState(false);
 
     const validate = () => {
         const newErrors: { name?: string; phone?: string; email?: string } = {};
@@ -54,11 +58,10 @@ export default function CreateContact() {
 
     const handleSave = async () => {
         if (!validate()) return;
-
         setIsSaving(true);
         try {
             const randomColor = TAILWIND_COLORS[Math.floor(Math.random() * TAILWIND_COLORS.length)];
-            await addContact(name.trim(), phone.trim(), email.trim(), randomColor);
+            await addContact(name.trim(), phone.trim(), email.trim(), randomColor, imageUri || undefined);
             router.back();
         } catch (error) {
             console.error("Error saving contact:", error);
@@ -67,6 +70,18 @@ export default function CreateContact() {
             setIsSaving(false);
         }
     };
+
+    if (showCamera) {
+        return (
+            <CameraCapture
+                onCapture={(uri) => {
+                    setImageUri(uri);
+                    setShowCamera(false);
+                }}
+                onClose={() => setShowCamera(false)}
+            />
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -84,13 +99,22 @@ export default function CreateContact() {
                 className="flex-1"
             >
                 <ScrollView className="flex-1 px-6 pt-8">
-                    {/* Avatar Placeholder */}
+                    {/* Avatar */}
                     <View className="items-center mb-10">
-                        <View className="w-32 h-32 bg-gray-100 rounded-full items-center justify-center border-4 border-white shadow-sm">
-                            <Ionicons name="camera" size={40} color="#94A3B8" />
-                        </View>
-                        <TouchableOpacity className="mt-4">
-                            <Text className="text-blue-600 font-semibold">Adicionar Foto</Text>
+                        <TouchableOpacity
+                            onPress={() => setShowCamera(true)}
+                            className="w-32 h-32 bg-gray-100 rounded-full items-center justify-center border-4 border-white shadow-sm overflow-hidden"
+                        >
+                            {imageUri ? (
+                                <Image source={{ uri: imageUri }} style={{ width: 128, height: 128 }} />
+                            ) : (
+                                <Ionicons name="camera" size={40} color="#94A3B8" />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity className="mt-4" onPress={() => setShowCamera(true)}>
+                            <Text className="text-blue-600 font-semibold">
+                                {imageUri ? "Trocar Foto" : "Adicionar Foto"}
+                            </Text>
                         </TouchableOpacity>
                     </View>
 
