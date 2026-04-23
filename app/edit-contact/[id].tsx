@@ -137,7 +137,7 @@ export default function EditContact() {
             <StatusBar barStyle="dark-content" />
             <Stack.Screen
                 options={{
-                    title: "Editar Contacto",
+                    title: "Editar Contato",
                     headerShown: true,
                     headerBackTitle: "Voltar",
                     headerRight: () => (
